@@ -1,0 +1,13 @@
+wavelet_app
+capas/
+capas_filtradas/
+*.png
+*.jpeg
+*.jpgS
+
+**/wavelet_app
+**/capas/
+**/capas_filtradas/
+**/*.png
+**/*.jpeg
+**/*.jpg
