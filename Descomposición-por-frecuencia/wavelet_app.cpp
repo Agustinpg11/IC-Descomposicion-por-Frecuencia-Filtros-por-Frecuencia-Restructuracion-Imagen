@@ -14,6 +14,7 @@
 namespace fs = std::filesystem;
 
 
+
 // =======================================================================================
 // Función auxiliar para medir el tiempo de ejecución con alta precisión (en milisegundos).
 // 
@@ -126,60 +127,71 @@ void save_detail_png(const std::string& filename, const std::vector<float>& laye
 //    }
 //}
 
-// Filtro de umbralización
-void filtro_escala_0(std::vector<float>& layer, float umbral) {
-    for (size_t i = 0; i < layer.size(); ++i) {
-        if (std::abs(layer[i]) < umbral) {
-            layer[i] = 0.0f;
+// FILTROS DEBILES
+
+    // Filtro de umbralización
+    void filtro_escala_0_debil(std::vector<float> &layer, float umbral)
+    {
+        for (size_t i = 0; i < layer.size(); ++i)
+        {
+            if (std::abs(layer[i]) < umbral)
+            {
+                layer[i] = 0.0f;
+            }
         }
     }
-}
 
-
-// Ganancia de volumen
-void filtro_escala_1(std::vector<float>& layer, float ganancia) {
-    for (size_t i = 0; i < layer.size(); ++i) {
-        layer[i] *= ganancia;
+    // Ganancia de volumen
+    void filtro_escala_1_debil(std::vector<float> &layer, float ganancia)
+    {
+        for (size_t i = 0; i < layer.size(); ++i)
+        {
+            layer[i] *= ganancia;
+        }
     }
-}
 
-// Atenuacion de volumenes grandes
-void filtro_escala_2(std::vector<float>& layer, float factor) {
-    for (size_t i = 0; i < layer.size(); ++i) {
-        layer[i] *= factor;
+    // Atenuacion de volumenes grandes
+    void filtro_escala_2_debil(std::vector<float> &layer, float factor)
+    {
+        for (size_t i = 0; i < layer.size(); ++i)
+        {
+            layer[i] *= factor;
+        }
     }
-}
 
-
-// Limitador
-void filtro_escala_3(std::vector<float>& layer, float limite) {
-    for (size_t i = 0; i < layer.size(); ++i) {
-        layer[i] = std::clamp(layer[i], -limite, limite);
+    // Limitador
+    void filtro_escala_3_debil(std::vector<float> &layer, float limite)
+    {
+        for (size_t i = 0; i < layer.size(); ++i)
+        {
+            layer[i] = std::clamp(layer[i], -limite, limite);
+        }
     }
-}
 
-
-// Atenuacion de volumenes grandes
-void filtro_escala_4(std::vector<float>& layer, float escala) {
-    for (size_t i = 0; i < layer.size(); ++i) {
-        layer[i] *= escala;
+    // Atenuacion de volumenes grandes
+    void filtro_escala_4_debil(std::vector<float> &layer, float escala)
+    {
+        for (size_t i = 0; i < layer.size(); ++i)
+        {
+            layer[i] *= escala;
+        }
     }
-}
 
-
-// Filtro residual: gamma correction
-void filtro_residual(std::vector<float>& residual, float gamma) {
-    for (size_t i = 0; i < residual.size(); ++i) {
-        float norm = std::clamp(residual[i] / 255.0f, 0.0f, 1.0f);
-        residual[i] = std::pow(norm, gamma) * 255.0f;
+    // Filtro residual: gamma correction
+    void filtro_residual_debil(std::vector<float> &residual, float gamma)
+    {
+        for (size_t i = 0; i < residual.size(); ++i)
+        {
+            float norm = std::clamp(residual[i] / 255.0f, 0.0f, 1.0f);
+            residual[i] = std::pow(norm, gamma) * 255.0f;
+        }
     }
-}
 
-///// FILTROS QUE YO AÑADIRÍA PARA ELEVAR COMPUTACIONALMENTE EL PROBLEMA
+///// FILTROS PESADOS
 
 // FUNCIÓN AUXILIAR QUE VAMOS A UTILIZAR PARA LOS FILTROS : 
 
-/*
+
 void energia_local(const std::vector<float>& layer, std::vector<float>& out,
                    int w, int h, int channels, int r) {
     std::vector<float> tmp(layer.size());
@@ -210,7 +222,6 @@ void energia_local(const std::vector<float>& layer, std::vector<float>& out,
     }
 }
 
-FILTROS : 
 
 void filtro_escala_0(std::vector<float>& layer, int w, int h, int channels, float sigma) {
     std::vector<float> energia(layer.size());
@@ -297,17 +308,7 @@ uint64_t fnv1a(const std::vector<uint8_t>& datos) {
     return h;
 }
 
-*/
-
-
-
-// =============================
-//            MAIN
-// =============================
-
- // otra idea
-
- /*
+/*
  * =========================================================================================
  * NUEVO FILTRO: BILATERAL NAIVE (EL "MONSTRUO" COMPUTACIONAL)
  * =========================================================================================
@@ -336,9 +337,9 @@ uint64_t fnv1a(const std::vector<uint8_t>& datos) {
  * =========================================================================================
  */
 
- /*
+
  // Filtro Bilateral Naive (Secuencial y sin optimizar para saturar la CPU)
-void filtro_bilateral_naive(const std::vector<float>& src, std::vector<float>& dst, 
+void filtro_bilateral_naive_residual(const std::vector<float>& src, std::vector<float>& dst, 
                             int w, int h, int channels, int radio, 
                             float sigma_espacial, float sigma_color) {
     for (int y = 0; y < h; ++y) {
@@ -373,7 +374,14 @@ void filtro_bilateral_naive(const std::vector<float>& src, std::vector<float>& d
     }
 }
 
-*/
+
+
+
+
+// =============================
+//            MAIN
+// =============================
+
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -465,16 +473,23 @@ int main(int argc, char** argv) {
 
         int capa = s % 5; // 0, 1, 2, 3, 4 para asignar filtros específicos
 
+        
+
         if (capa == 0) {
-            filtro_escala_0(detail_layers[s], 4.0f);
+            // filtro_escala_0_debil(detail_layers[s], 4.0f);
+            filtro_escala_0(detail_layers[s], w, h, channels, 4.0f);
         } else if (capa == 1) {
-            filtro_escala_1(detail_layers[s], 1.5f);
+            //filtro_escala_1_debil(detail_layers[s], 1.5f);
+            filtro_escala_1(detail_layers[s], w, h, channels, 1.5f);
         } else if (capa == 2) {
-            filtro_escala_2(detail_layers[s], 1.2f);
+            //filtro_escala_2_debil(detail_layers[s], 1.2f);
+            filtro_escala_2(detail_layers[s], w, h, channels, 1.2f);
         } else if (capa == 3) {
+            //filtro_escala_3_debil(detail_layers[s], 50.0f);
             filtro_escala_3(detail_layers[s], 50.0f);
         } else if (capa == 4) {
-            filtro_escala_4(detail_layers[s], 0.9f);
+            //filtro_escala_4_debil(detail_layers[s], 0.9f);
+            filtro_escala_4(detail_layers[s], w, h, channels, 0.9f);
         } else {
             std::cerr << "Error\n";
         }
@@ -488,7 +503,10 @@ int main(int argc, char** argv) {
         }
     }
 
-    filtro_residual(residual, 0.9f); 
+    //filtro_residual_debil(residual, 0.9f); 
+    //filtro_residual(residual, 0.9f);
+    std::vector<float> residual_filtrado(residual.size());
+    filtro_bilateral_naive_residual(residual, residual_filtrado, w, h, channels, 5, 3.0f, 25.0f);
 
     if (guardar_png) {
         std::vector<uint8_t> res_buf(residual.size());
@@ -518,15 +536,25 @@ int main(int argc, char** argv) {
         }
     }
 
-    std::cout << "Imagen recompuesta...\n";
+    // Convertimos a uint8_t para guardar en PNG y calcular checksum
 
     std::vector<uint8_t> out_final(total_pixels);
     for (size_t i = 0; i < total_pixels; ++i) {
         out_final[i] = static_cast<uint8_t>(std::clamp(final_image[i], 0.0f, 255.0f));
     }
-    stbi_write_png("resultado_final.png", w, h, channels, out_final.data(), w * channels);
-    std::cout << "Resultado guardado en resultado_final.png\n";
 
+    uint64_t hash = fnv1a(out_final);
+    std::cout << "Checksum FNV-1a imagen: 0x" << std::hex << hash << std::dec << "\n";
+
+
+    if (guardar_png) {
+        std::vector<uint8_t> out_final(total_pixels);
+        for (size_t i = 0; i < total_pixels; ++i) {
+            out_final[i] = static_cast<uint8_t>(std::clamp(final_image[i], 0.0f, 255.0f));
+        }
+        stbi_write_png("resultado_final.png", w, h, channels, out_final.data(), w * channels);
+        std::cout << "Resultado guardado en resultado_final.png\n";
+    }
 
     double t_etapa3 = ms_desde(t_inicio_etapa3);
     std::cout << "Etapa 3 finalizada en: " << t_etapa3 << " ms\n\n";
