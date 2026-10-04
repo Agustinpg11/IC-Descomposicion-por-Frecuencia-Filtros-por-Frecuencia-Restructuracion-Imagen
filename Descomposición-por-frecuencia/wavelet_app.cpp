@@ -423,14 +423,20 @@ int main(int argc, char** argv) {
         fs::create_directories("capas_filtradas");
         fs::create_directories("capas");
     }
+
+    // Cronometro global
+    auto t_inicio_total = clk::now();
+
     // =============================
     // ETAPA 1: Descomposición por frecuencia usando convolución a trous
     // ============================
+
+    std::cout << "--- ETAPA 1: Descomponiendo por frecuencia... ---\n";
+    auto t_inicio_etapa1 = clk::now();
+
     // Guardamos cada capa en memoria
     std::vector<float> blurred(total_pixels);
     std::vector<std::vector<float>> detail_layers(num_scales, std::vector<float>(total_pixels));
-
-        std::cout << "Descomponiendo por frecuencia...\n";
 
     for (int s = 0; s < num_scales; ++s) {
         atrous_blur(current, blurred, w, h, channels, s);
@@ -462,14 +468,16 @@ int main(int argc, char** argv) {
         std::cout << "Generada: " << filename_residual << "\n";
     }
 
-        std::cout << "Descomposicion por frecuencia completada.\n";
+    double t_etapa1 = ms_desde(t_inicio_etapa1);
+    std::cout << "Etapa 1 finalizada en: " << t_etapa1 << " ms\n\n";
 
     
     // =============================
     // ETAPA 2: Paralelismo funcional
     // =============================
 
-    std::cout << "Lanzando las tareas de manera secuencial...\n";
+    std::cout << "--- ETAPA 2: Aplicando filtros a las capas... ---\n";
+    auto t_inicio_etapa2 = clk::now();
 
     for (int s = 0; s < num_scales; ++s) {
         std::string filename = "capas_filtradas/escala_" + std::to_string(s + 1) + ".png";
@@ -511,13 +519,15 @@ int main(int argc, char** argv) {
         std::cout << "Generada: " << filename_residual_filtrado << "\n";
     }
 
-    std::cout << "Todos los filtros han finalizado secuencialmente.\n";
+    double t_etapa2 = ms_desde(t_inicio_etapa2);
+    std::cout << "Etapa 2 finalizada en: " << t_etapa2 << " ms\n\n";
 
     // =============================
     // ETAPA 3: Reconstruccion de la imagen original
     // =============================
 
-    std::cout << "Recomponiendo la imagen...\n";
+    std::cout << "--- ETAPA 3: Recomponiendo la imagen original... ---\n";
+    auto t_inicio_etapa3 = clk::now();
 
     // Imagen final = residual + capa0 + capa1 + capa2 ...
     std::vector final_image = residual;
@@ -536,6 +546,27 @@ int main(int argc, char** argv) {
     stbi_write_png("resultado_final.png", w, h, channels, out_final.data(), w * channels);
     std::cout << "Resultado guardado en resultado_final.png\n";
 
+
+    double t_etapa3 = ms_desde(t_inicio_etapa3);
+    std::cout << "Etapa 3 finalizada en: " << t_etapa3 << " ms\n\n";
+
+    double t_total = ms_desde(t_inicio_total);
+
+    // ============================================================
+    // RESUMEN DE TIEMPOS
+    // ============================================================
+    std::cout << "========================================\n";
+    std::cout << "          RESUMEN DE RENDIMIENTO        \n";
+    std::cout << "========================================\n";
+    std::cout << "Modo guardado PNG : " << (guardar_png ? "ACTIVADO" : "DESACTIVADO (Benchmark)") << "\n";
+    std::cout << "Escalas procesadas: " << num_scales << "\n";
+    std::cout << "----------------------------------------\n";
+    std::cout << "Etapa 1 (Descomposición) : " << t_etapa1 << " ms\n";
+    std::cout << "Etapa 2 (Filtrado)       : " << t_etapa2 << " ms\n";
+    std::cout << "Etapa 3 (Reconstrucción) : " << t_etapa3 << " ms\n";
+    std::cout << "----------------------------------------\n";
+    std::cout << "Tiempo Total Algoritmo   : " << t_total << " ms (" << t_total / 1000.0 << " s)\n";
+    std::cout << "========================================\n";
 
     return 0;
 }
