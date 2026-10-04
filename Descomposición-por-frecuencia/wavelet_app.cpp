@@ -305,25 +305,6 @@ uint64_t fnv1a(const std::vector<uint8_t>& datos) {
 //            MAIN
 // =============================
 
-
-// IDEAAAAAA
-
-/* 
- * TODO (Idea para comentar):
- * He estado pensando que para sacar las métricas de tiempo reales para la memoria 
- * (y ver las diferencias cuando metamos -O3 o autovectorización), el disco duro 
- * nos va a hacer un cuello de botella gigante al guardar tantos PNGs.
- * 
- * ¿Qué te parece si le añadimos al main un tercer parámetro tipo "guardar_png (1/0)"? 
- * La idea sería que si le pasamos un 0 al ejecutar, envuelva todos los 'stbi_write_png' 
- * y 'save_detail_png' de las 3 etapas en un 'if (guardar)' y se los salte. 
- * Así el programa hace todos los cálculos matemáticos pesados en la RAM, pero no 
- * escribe nada en disco y sacamos tiempos puros de CPU.
- * 
- * Échale un ojo y me dices si te mola la idea antes de ponerme a cambiar los ifs.
- */
-
-
  // otra idea
 
  /*
