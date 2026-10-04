@@ -507,6 +507,7 @@ int main(int argc, char** argv) {
     //filtro_residual(residual, 0.9f);
     std::vector<float> residual_filtrado(residual.size());
     filtro_bilateral_naive_residual(residual, residual_filtrado, w, h, channels, 5, 3.0f, 25.0f);
+    residual = std::move(residual_filtrado);
 
     if (guardar_png) {
         std::vector<uint8_t> res_buf(residual.size());
