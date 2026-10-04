@@ -1,0 +1,6 @@
+Makefile text eol=lf
+*.sh text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.txt text eol=lf
+*.jpg binary
